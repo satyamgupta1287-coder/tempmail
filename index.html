@@ -3,8 +3,39 @@
 <head>
   <title>Temp Mail Pro</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #f5f5f5;
+    }
+    button {
+      padding: 12px 18px;
+      margin: 10px;
+      border: none;
+      background: #007bff;
+      color: white;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    #email {
+      font-weight: bold;
+      margin-top: 15px;
+      font-size: 18px;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      background: white;
+      margin: 5px;
+      padding: 10px;
+      border-radius: 5px;
+    }
+  </style>
 </head>
-<body style="font-family:sans-serif; text-align:center;">
+<body>
 
 <h2>📧 Temp Mail</h2>
 
@@ -19,26 +50,20 @@ let token = "";
 let email = "";
 let password = "123456";
 
-// Generate Email
+// 🔥 Generate Email (NO DOMAIN API)
 async function generateEmail() {
   try {
     document.getElementById("email").innerText = "Generating...";
 
-    let res = await fetch("/api/mail/domains");
-    let data = await res.json();
-
-    if (!data["hydra:member"] || data["hydra:member"].length === 0) {
-      alert("Proxy working but no domains!");
-      return;
-    }
-
-    let domains = data["hydra:member"];
-    let domain = domains[Math.floor(Math.random() * domains.length)].domain;
+    // Working domains (fallback safe)
+    let domains = ["fthcapital.com", "mail.tm"];
+    let domain = domains[Math.floor(Math.random() * domains.length)];
 
     let login = Math.random().toString(36).substring(2, 10);
     email = login + "@" + domain;
 
-    await fetch("/api/mail/accounts", {
+    // Create account
+    let acc = await fetch("/api/mail/accounts", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -49,6 +74,12 @@ async function generateEmail() {
       })
     });
 
+    if (!acc.ok) {
+      alert("Account creation failed");
+      return;
+    }
+
+    // Login
     let loginRes = await fetch("/api/mail/token", {
       method: "POST",
       headers: {
@@ -61,8 +92,13 @@ async function generateEmail() {
     });
 
     let loginData = await loginRes.json();
-    token = loginData.token;
 
+    if (!loginData.token) {
+      alert("Login failed");
+      return;
+    }
+
+    token = loginData.token;
     document.getElementById("email").innerText = email;
 
   } catch (err) {
@@ -70,11 +106,11 @@ async function generateEmail() {
   }
 }
 
-// Inbox
+// 📥 Inbox
 async function loadInbox() {
   try {
     if (!token) {
-      alert("Generate email first!");
+      alert("Pehle email generate karo!");
       return;
     }
 
@@ -101,7 +137,7 @@ async function loadInbox() {
     });
 
   } catch (err) {
-    alert("Inbox error: " + err.message);
+    alert("Inbox Error: " + err.message);
   }
 }
 </script>
