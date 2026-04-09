@@ -1,1 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Temp Mail Pro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="font-family:sans-serif; text-align:center;">
 
+<h2>📧 Temp Mail</h2>
+
+<button onclick="generateEmail()">Generate Email</button>
+<p id="email"></p>
+
+<button onclick="loadInbox()">Check Inbox</button>
+<ul id="inbox"></ul>
+
+<script>
+let token = "";
+let email = "";
+let password = "123456";
+
+async function generateEmail() {
+  // Get domain
+  let res = await fetch("https://api.mail.tm/domains", {
+    headers: { "Accept": "application/json" }
+  });
+  let data = await res.json();
+  let domain = data["hydra:member"][0].domain;
+
+  // Create random email
+  let login = Math.random().toString(36).substring(7);
+  email = login + "@" + domain;
+
+  // Create account
+  await fetch("https://api.mail.tm/accounts", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      address: email,
+      password: password
+    })
+  });
+
+  // Login
+  let loginRes = await fetch("https://api.mail.tm/token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      address: email,
+      password: password
+    })
+  });
+
+  let loginData = await loginRes.json();
+  token = loginData.token;
+
+  document.getElementById("email").innerText = email;
+}
+
+async function loadInbox() {
+  let res = await fetch("https://api.mail.tm/messages", {
+    headers: {
+      "Authorization": "Bearer " + token
+    }
+  });
+
+  let data = await res.json();
+  let inbox = document.getElementById("inbox");
+  inbox.innerHTML = "";
+
+  data["hydra:member"].forEach(mail => {
+    let li = document.createElement("li");
+    li.innerText = mail.subject;
+    inbox.appendChild(li);
+  });
+}
+</script>
+
+</body>
+</html>
