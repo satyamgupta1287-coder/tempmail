@@ -1,144 +1,55 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Temp Mail Pro</title>
+  <title>Temp Mail Easy</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      background: #f5f5f5;
-    }
-    button {
-      padding: 12px 18px;
-      margin: 10px;
-      border: none;
-      background: #007bff;
-      color: white;
-      border-radius: 6px;
-      font-size: 16px;
-    }
-    #email {
-      font-weight: bold;
-      margin-top: 15px;
-      font-size: 18px;
-    }
-    ul {
-      list-style: none;
-      padding: 0;
-    }
-    li {
-      background: white;
-      margin: 5px;
-      padding: 10px;
-      border-radius: 5px;
-    }
+    body { font-family:sans-serif; text-align:center; }
+    button { padding:10px; margin:10px; }
   </style>
 </head>
 <body>
 
-<h2>📧 Temp Mail</h2>
+<h2>📧 Temp Mail (Easy)</h2>
 
-<button onclick="generateEmail()">Generate Email</button>
-<p id="email">No email generated</p>
+<button onclick="generate()">Generate Email</button>
+<p id="email">No email</p>
 
-<button onclick="loadInbox()">Check Inbox</button>
+<button onclick="check()">Check Inbox</button>
 <ul id="inbox"></ul>
 
 <script>
-let token = "";
-let email = "";
-let password = "123456";
+let login="", domain="1secmail.com";
 
-// 🔥 Generate Email (NO DOMAIN API)
-async function generateEmail() {
-  try {
-    document.getElementById("email").innerText = "Generating...";
-
-    // Working domains (fallback safe)
-    let domains = ["fthcapital.com", "mail.tm"];
-    let domain = domains[Math.floor(Math.random() * domains.length)];
-
-    let login = Math.random().toString(36).substring(2, 10);
-    email = login + "@" + domain;
-
-    // Create account
-    let acc = await fetch("/api/mail/accounts", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        address: email,
-        password: password
-      })
-    });
-
-    if (!acc.ok) {
-      alert("Account creation failed");
-      return;
-    }
-
-    // Login
-    let loginRes = await fetch("/api/mail/token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        address: email,
-        password: password
-      })
-    });
-
-    let loginData = await loginRes.json();
-
-    if (!loginData.token) {
-      alert("Login failed");
-      return;
-    }
-
-    token = loginData.token;
-    document.getElementById("email").innerText = email;
-
-  } catch (err) {
-    alert("Error: " + err.message);
-  }
+// Generate email
+function generate(){
+  login = Math.random().toString(36).substring(2,10);
+  document.getElementById("email").innerText = login + "@" + domain;
 }
 
-// 📥 Inbox
-async function loadInbox() {
-  try {
-    if (!token) {
-      alert("Pehle email generate karo!");
-      return;
-    }
-
-    let res = await fetch("/api/mail/messages", {
-      headers: {
-        "Authorization": "Bearer " + token
-      }
-    });
-
-    let data = await res.json();
-
-    let inbox = document.getElementById("inbox");
-    inbox.innerHTML = "";
-
-    if (!data["hydra:member"] || data["hydra:member"].length === 0) {
-      inbox.innerHTML = "<li>No emails yet</li>";
-      return;
-    }
-
-    data["hydra:member"].forEach(mail => {
-      let li = document.createElement("li");
-      li.innerText = "📩 " + mail.subject;
-      inbox.appendChild(li);
-    });
-
-  } catch (err) {
-    alert("Inbox Error: " + err.message);
+// Check inbox
+async function check(){
+  if(!login){
+    alert("Generate email first");
+    return;
   }
+
+  let res = await fetch(`https://www.1secmail.com/api/v1/?action=getMessages&login=${login}&domain=${domain}`);
+  let data = await res.json();
+
+  let inbox = document.getElementById("inbox");
+  inbox.innerHTML="";
+
+  if(data.length === 0){
+    inbox.innerHTML="<li>No emails yet</li>";
+    return;
+  }
+
+  data.forEach(mail=>{
+    let li=document.createElement("li");
+    li.innerText=mail.subject;
+    inbox.appendChild(li);
+  });
 }
 </script>
 
