@@ -4,53 +4,62 @@
   <title>Temp Mail Easy</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family:sans-serif; text-align:center; }
-    button { padding:10px; margin:10px; }
+    body { font-family:sans-serif; text-align:center; background:#f5f5f5; }
+    button { padding:12px; margin:10px; background:#007bff; color:white; border:none; border-radius:6px; }
+    #email { font-weight:bold; margin:10px; }
   </style>
 </head>
 <body>
 
-<h2>📧 Temp Mail (Easy)</h2>
+<h2>📧 Temp Mail</h2>
 
-<button onclick="generate()">Generate Email</button>
+<button id="genBtn">Generate Email</button>
 <p id="email">No email</p>
 
-<button onclick="check()">Check Inbox</button>
+<button id="inboxBtn">Check Inbox</button>
 <ul id="inbox"></ul>
 
 <script>
-let login="", domain="1secmail.com";
+let login = "";
+let domain = "1secmail.com";
 
-// Generate email
-function generate(){
+// Generate button
+document.getElementById("genBtn").addEventListener("click", () => {
   login = Math.random().toString(36).substring(2,10);
   document.getElementById("email").innerText = login + "@" + domain;
-}
+});
 
-// Check inbox
-async function check(){
+// Inbox button
+document.getElementById("inboxBtn").addEventListener("click", async () => {
   if(!login){
-    alert("Generate email first");
+    alert("Pehle email generate karo!");
     return;
   }
-
-  let res = await fetch(`https://www.1secmail.com/api/v1/?action=getMessages&login=${login}&domain=${domain}`);
-  let data = await res.json();
 
   let inbox = document.getElementById("inbox");
-  inbox.innerHTML="";
+  inbox.innerHTML = "<li>Loading...</li>";
 
-  if(data.length === 0){
-    inbox.innerHTML="<li>No emails yet</li>";
-    return;
+  try {
+    let res = await fetch(`https://www.1secmail.com/api/v1/?action=getMessages&login=${login}&domain=${domain}`);
+    let data = await res.json();
+
+    inbox.innerHTML = "";
+
+    if(data.length === 0){
+      inbox.innerHTML = "<li>No emails yet</li>";
+      return;
+    }
+
+    data.forEach(mail => {
+      let li = document.createElement("li");
+      li.innerText = "📩 " + mail.subject;
+      inbox.appendChild(li);
+    });
+
+  } catch (err) {
+    inbox.innerHTML = "<li>Error loading inbox</li>";
   }
-
-  data.forEach(mail=>{
-    let li=document.createElement("li");
-    li.innerText=mail.subject;
-    inbox.appendChild(li);
-  });
-}
+});
 </script>
 
 </body>
