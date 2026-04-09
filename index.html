@@ -1,10 +1,39 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Temp Mail</title>
+  <title>Temp Mail Pro</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #f5f5f5;
+    }
+    button {
+      padding: 10px 15px;
+      margin: 10px;
+      border: none;
+      background: #007bff;
+      color: white;
+      border-radius: 5px;
+    }
+    #email {
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      background: white;
+      margin: 5px;
+      padding: 10px;
+      border-radius: 5px;
+    }
+  </style>
 </head>
-<body style="font-family:sans-serif; text-align:center;">
+<body>
 
 <h2>📧 Temp Mail</h2>
 
@@ -22,7 +51,7 @@ let password = "123456";
 // Generate Email
 async function generateEmail() {
   try {
-    alert("Generating..."); // DEBUG
+    document.getElementById("email").innerText = "Generating...";
 
     let res = await fetch("https://api.mail.tm/domains", {
       headers: { "Accept": "application/json" }
@@ -30,13 +59,21 @@ async function generateEmail() {
 
     let data = await res.json();
 
-    let domain = data["hydra:member"][0].domain;
+    if (!data["hydra:member"] || data["hydra:member"].length === 0) {
+      alert("No domain available. Try again.");
+      return;
+    }
 
-    let login = Math.random().toString(36).substring(7);
+    // Random domain
+    let domains = data["hydra:member"];
+    let random = Math.floor(Math.random() * domains.length);
+    let domain = domains[random].domain;
+
+    let login = Math.random().toString(36).substring(2, 10);
     email = login + "@" + domain;
 
     // Create account
-    await fetch("https://api.mail.tm/accounts", {
+    let acc = await fetch("https://api.mail.tm/accounts", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -46,6 +83,11 @@ async function generateEmail() {
         password: password
       })
     });
+
+    if (!acc.ok) {
+      alert("Account creation failed. Retry.");
+      return;
+    }
 
     // Login
     let loginRes = await fetch("https://api.mail.tm/token", {
@@ -60,6 +102,12 @@ async function generateEmail() {
     });
 
     let loginData = await loginRes.json();
+
+    if (!loginData.token) {
+      alert("Login failed.");
+      return;
+    }
+
     token = loginData.token;
 
     document.getElementById("email").innerText = email;
@@ -88,9 +136,14 @@ async function loadInbox() {
     let inbox = document.getElementById("inbox");
     inbox.innerHTML = "";
 
+    if (!data["hydra:member"] || data["hydra:member"].length === 0) {
+      inbox.innerHTML = "<li>No emails yet</li>";
+      return;
+    }
+
     data["hydra:member"].forEach(mail => {
       let li = document.createElement("li");
-      li.innerText = mail.subject;
+      li.innerText = "📩 " + mail.subject;
       inbox.appendChild(li);
     });
 
